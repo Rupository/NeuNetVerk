@@ -1,46 +1,119 @@
-# Assignment 2: Neural Network Verification for Adult Census Income Classification
+# Symbolic Logic and Applications: Verification of Neural Networks
 
+**Due:** 28th October 2025  
+**Points:** 100  
 
-## Assignment Overview
+This is an individual assignment. You are permitted to use generative AI tools to help write your code.  
+Please acknowledge the use of AI wherever applicable.
 
-This is an **individual assignment**. You are permitted to use generative AI tools to help write your code. Please **acknowledge the use of AI** wherever applicable.
+---
 
-The Adult Census Income dataset is a structured tabular dataset derived from the 1994 U.S. Census. Each record consists of demographic and employment-related attributes (e.g., age, education, occupation, marital status, hours worked). The prediction task is binary classification: determine whether an individual earns more than $50,000 annually.
+## Table of Contents
+- [Dataset](#dataset)
+- [Part I: Formal Specifications](#part-i-formal-specifications)
+  - [1. Counterfactual Fairness (Race)](#1-counterfactual-fairness-race)
+  - [2. Local Robustness at Class Means](#2-local-robustness-at-class-means)
+- [Part II: Formal Verification with Marabou](#part-ii-formal-verification-with-marabou)
+- [Part III: More Properties](#part-iii-more-properties)
 
-Smayan has trained nine feedforward neural networks, each with fully connected layers, ReLU activations in the hidden layers, and a sigmoid output for binary classification. These models were trained using the Adam optimizer with binary cross-entropy loss. The nine models differ in depth (4, 6, or 8 layers) and width (100, 200, or 300 neurons per layer).
+---
 
-## Assignment Parts
+## Dataset
 
-### Part I: Formal Specification
+The **Adult Census Income** dataset is a structured tabular dataset derived from the 1994 U.S. Census.  
+Each record consists of demographic and employment-related attributes (e.g., age, education, occupation, marital status, hours worked).
 
-Write five formal specifications for the Adult Income classification task. Each specification must be precise, using logical notation. These can be fairness, robustness, or functional correctness specifications.
+The prediction task is **binary classification**: determine whether an individual earns more than **$50,000** annually.
 
-### Part II: Formal Verification
+Smayan has trained **nine feedforward neural networks**, each with:
 
-For each of your five specifications, verify whether the property holds for the given neural networks using Marabou (github.com/NeuralNetworkVerification/Marabou).
+- Fully connected layers  
+- ReLU activations in hidden layers  
+- A sigmoid output for binary classification  
 
-### Part III: Limitations
+The models were trained using the **Adam optimizer** with **binary cross-entropy loss**.
 
-Analyze the limitations of the formal verification approach by changing the architecture (both depth and nodes/layer) as well as specifications.
+They differ in architecture by:
 
-## Contents
+| Depth | Width (neurons per layer) |
+|--------|----------------------------|
+| 4      | 100, 200, 300              |
+| 6      | 100, 200, 300              |
+| 8      | 100, 200, 300              |
 
-- Formal specifications for neural network properties
-- Marabou verification scripts and results
-- Analysis of verification limitations
+---
 
-## Setup
+## Part I: Formal Specifications
 
-### Prerequisites
-- Python environment with required packages
-- Marabou neural network verifier
-- Access to the trained neural network models
+Let:
 
-### Installation
-1. Install Marabou from: https://github.com/NeuralNetworkVerification/Marabou
-2. Set up Python environment with necessary dependencies
-3. Download the trained neural network models
+- $f : X \to [0, 1]$ be the network score  
+- $\hat{y}(x) = 1[f(x) \ge 0.5]$ be the predicted label  
 
-### Usage
-- Run verification scripts using Marabou
-- Analyze results and generate reports
+Inputs $x$ are constrained by feature-wise bounds and one-hot constraints for categorical features.
+
+---
+
+### 1. Counterfactual Fairness (Race)
+
+Let `race(x)` denote the race one-hot subvector of $x$, and let `RaceVals` be the set of valid race encodings.  
+For any $x \in X$, define $x'$ to be $x$ with `race(x)` replaced (all other coordinates unchanged).  
+The model is **fair at** $x$ iff:
+
+$$
+\forall \text{race}(x) \in \text{RaceVals} : \hat{y}(x) = \hat{y}(x')
+$$
+
+**Verification target:** Search for a violation — i.e., determine satisfiability (SAT) of:
+
+$$
+\exists x \in X, \exists \text{race}(x) \in \text{RaceVals} : \hat{y}(x) \ne \hat{y}(x')
+$$
+
+subject to input bounds and one-hot constraints.
+
+---
+
+### 2. Local Robustness at Class Means
+
+For $y \in \{0, 1\}$, let $\mu_y$ be the mean input (in normalized feature space) over the subset with label $y$.  
+Fix $\epsilon > 0$ and the norm $\|\cdot\|_\infty$.  
+
+Define the admissible $\epsilon$-ball:
+
+$$
+B_\infty(\mu_y, \epsilon) = \{ x : \|x - \mu_y\|_\infty \le \epsilon, \text{ continuous features within bounds, categoricals remain valid one-hot} \}
+$$
+
+The model is **robust at** $\mu_y$ iff:
+
+$$
+\forall x \in B_\infty(\mu_y, \epsilon) : \hat{y}(x) = \hat{y}(\mu_y)
+$$
+
+---
+
+## Part II: Formal Verification with Marabou
+
+Use **[Marabou](https://github.com/NeuralNetworkVerification/Marabou)** to check both properties for each of the nine models.  
+Explain and illustrate how different models perform differently for each verification task.
+
+You may include:
+
+- The verification query formulation  
+- Screenshots or logs of Marabou outputs  
+- Comparisons across different architectures  
+
+---
+
+## Part III: More Properties
+
+Propose **three other verifiable properties**.  
+For each property:
+
+1. State it formally.  
+2. Encode it in Marabou.  
+3. Test it on the provided neural networks.  
+
+---
+
