@@ -24,4 +24,3 @@ ipykernel>=6.0.0
 
 # Additional utilities
 tqdm>=4.60.0
-=

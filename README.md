@@ -116,4 +116,4 @@ For each property:
 3. Test it on the provided neural networks.  
 
 ---
-=
+
